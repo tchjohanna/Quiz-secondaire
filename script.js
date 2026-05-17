@@ -603,6 +603,7 @@ let level = parseInt(localStorage.getItem("level")) || 1;
 let combo = 0;
 let lives = 3;
 let questionsShuffled = [];
+let gameOver = false;
 
 // Mélange des questions
 function shuffle(arr) {
@@ -636,11 +637,15 @@ const questionNumEl  = document.getElementById("questionNumber");
 // ═══════════════════════════════════════════════
 
 function init() {
+  gameOver = false;
   questionsShuffled = shuffle(questions);
   currentQuestion = 0;
   score = 0;
   combo = 0;
   lives = 3;
+  scoreEl.textContent = 0;
+  comboEl.textContent = "x0";
+  livesEl.textContent = "❤️❤️❤️";
   xpEl.textContent = xp;
   levelEl.textContent = level;
   updateXPBar();
@@ -732,7 +737,8 @@ function updateLives() {
   for (let i = lives; i < 3; i++) hearts += "🖤";
   livesEl.textContent = hearts;
 
-  if (lives <= 0) {
+  if (lives <= 0 && !gameOver) {
+    gameOver = true;
     setTimeout(() => {
       showGameOver();
     }, 1500);
@@ -780,11 +786,10 @@ function showLevelUp() {
 function showGameOver() {
   const popup = document.getElementById("popup");
   document.getElementById("popup-title").textContent = "💀 GAME OVER";
-  document.getElementById("popup-text").textContent = `Score final : ${score} pts — Tu dois réviser davantage, Recrue !`;
+  document.getElementById("popup-text").textContent = `Score final : ${score} pts\nTu dois réviser davantage, Recrue !`;
   document.getElementById("popup-btn").textContent = "RECOMMENCER";
   document.getElementById("popup-btn").onclick = () => {
     popup.style.display = "none";
-    lives = 3;
     init();
   };
   popup.style.display = "flex";
@@ -804,7 +809,6 @@ function showEndScreen() {
   document.getElementById("popup-btn").textContent = "REJOUER";
   document.getElementById("popup-btn").onclick = () => {
     popup.style.display = "none";
-    lives = 3;
     init();
   };
   popup.style.display = "flex";
