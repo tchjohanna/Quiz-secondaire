@@ -592,8 +592,9 @@ const questions = [
 
 ];
 
+
 // ═══════════════════════════════════════════════
-// ÉTAT DU JEU
+// ÉTAT DU JEU — sans système de vies
 // ═══════════════════════════════════════════════
 
 let currentQuestion = 0;
@@ -601,11 +602,10 @@ let score = 0;
 let xp = parseInt(localStorage.getItem("xp")) || 0;
 let level = parseInt(localStorage.getItem("level")) || 1;
 let combo = 0;
-let lives = 3;
+let goodAnswers = 0;
+let badAnswers = 0;
 let questionsShuffled = [];
-let gameOver = false;
 
-// Mélange des questions
 function shuffle(arr) {
   let a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -619,33 +619,33 @@ function shuffle(arr) {
 // ÉLÉMENTS DOM
 // ═══════════════════════════════════════════════
 
-const questionEl     = document.getElementById("question");
-const answersEl      = document.getElementById("answers");
-const feedbackEl     = document.getElementById("feedback");
-const nextBtn        = document.getElementById("nextBtn");
-const scoreEl        = document.getElementById("score");
-const xpEl           = document.getElementById("xp");
-const levelEl        = document.getElementById("level");
-const comboEl        = document.getElementById("combo");
-const livesEl        = document.getElementById("lives");
-const xpFill         = document.getElementById("xpFill");
-const difficultyEl   = document.getElementById("difficulty");
-const questionNumEl  = document.getElementById("questionNumber");
+const questionEl    = document.getElementById("question");
+const answersEl     = document.getElementById("answers");
+const feedbackEl    = document.getElementById("feedback");
+const nextBtn       = document.getElementById("nextBtn");
+const scoreEl       = document.getElementById("score");
+const xpEl          = document.getElementById("xp");
+const levelEl       = document.getElementById("level");
+const comboEl       = document.getElementById("combo");
+const statsEl       = document.getElementById("stats");
+const xpFill        = document.getElementById("xpFill");
+const difficultyEl  = document.getElementById("difficulty");
+const questionNumEl = document.getElementById("questionNumber");
 
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
 
 function init() {
-  gameOver = false;
   questionsShuffled = shuffle(questions);
   currentQuestion = 0;
   score = 0;
   combo = 0;
-  lives = 3;
+  goodAnswers = 0;
+  badAnswers = 0;
   scoreEl.textContent = 0;
   comboEl.textContent = "x0";
-  livesEl.textContent = "❤️❤️❤️";
+  if (statsEl) statsEl.textContent = "✅ 0  ❌ 0";
   xpEl.textContent = xp;
   levelEl.textContent = level;
   updateXPBar();
@@ -700,49 +700,32 @@ function getDiffClass(diff) {
 function checkAnswer(index, btn) {
   const q = questionsShuffled[currentQuestion];
   const buttons = document.querySelectorAll(".answer-btn");
-
   buttons.forEach(b => b.disabled = true);
 
   if (index === q.correct) {
     btn.classList.add("correct");
-    score += 10 + (combo * 2);
-    xp = xp + 20;
+    const pts = 10 + (combo * 2);
+    score += pts;
+    xp += 20;
     combo++;
+    goodAnswers++;
     feedbackEl.className = "feedback-good";
-    feedbackEl.innerHTML = `<strong>✅ BONNE RÉPONSE ! +${10 + ((combo-1)*2)} pts</strong><br><br>${q.explanation}`;
+    feedbackEl.innerHTML = `<strong>✅ BONNE RÉPONSE ! +${pts} pts${combo >= 3 ? ' 🔥 COMBO x' + combo : ''}</strong><br><br>${q.explanation}`;
   } else {
     btn.classList.add("wrong");
     buttons[q.correct].classList.add("correct");
     combo = 0;
-    lives--;
+    badAnswers++;
     feedbackEl.className = "feedback-bad";
-    feedbackEl.innerHTML = `<strong>❌ MAUVAISE RÉPONSE</strong><br><br>${q.explanation}`;
+    feedbackEl.innerHTML = `<strong>❌ MAUVAISE RÉPONSE — Retiens bien ça !</strong><br><br>${q.explanation}`;
   }
 
   feedbackEl.style.display = "block";
   scoreEl.textContent = score;
   comboEl.textContent = combo >= 3 ? `x${combo} 🔥` : `x${combo}`;
-  updateLives();
+  if (statsEl) statsEl.textContent = `✅ ${goodAnswers}  ❌ ${badAnswers}`;
   updateXP();
   nextBtn.style.display = "inline-block";
-}
-
-// ═══════════════════════════════════════════════
-// VIES
-// ═══════════════════════════════════════════════
-
-function updateLives() {
-  let hearts = "";
-  for (let i = 0; i < lives; i++) hearts += "❤️";
-  for (let i = lives; i < 3; i++) hearts += "🖤";
-  livesEl.textContent = hearts;
-
-  if (lives <= 0 && !gameOver) {
-    gameOver = true;
-    setTimeout(() => {
-      showGameOver();
-    }, 1500);
-  }
 }
 
 // ═══════════════════════════════════════════════
@@ -752,66 +735,55 @@ function updateLives() {
 function updateXP() {
   xpEl.textContent = xp;
   updateXPBar();
-
   if (xp >= level * 100) {
     level++;
     levelEl.textContent = level;
     localStorage.setItem("level", level);
     showLevelUp();
   }
-
   localStorage.setItem("xp", xp);
 }
 
 function updateXPBar() {
   const percent = xp % 100;
   xpFill.style.width = percent + "%";
+  const pctEl = document.getElementById("xp-pct");
+  if (pctEl) pctEl.textContent = percent + "%";
 }
 
 // ═══════════════════════════════════════════════
 // POPUPS
 // ═══════════════════════════════════════════════
 
-function showLevelUp() {
+function showPopup(title, text, btnLabel, onClose) {
   const popup = document.getElementById("popup");
-  document.getElementById("popup-title").textContent = "⬆️ LEVEL UP !";
-  document.getElementById("popup-text").textContent = `Tu passes au niveau ${level} ! La Force est avec toi.`;
-  document.getElementById("popup-btn").textContent = "CONTINUER";
-  document.getElementById("popup-btn").onclick = () => {
+  document.getElementById("popup-title").textContent = title;
+  document.getElementById("popup-text").textContent = text;
+  const btn = document.getElementById("popup-btn");
+  btn.textContent = btnLabel;
+  btn.onclick = () => {
     popup.style.display = "none";
+    if (onClose) onClose();
   };
   popup.style.display = "flex";
 }
 
-function showGameOver() {
-  const popup = document.getElementById("popup");
-  document.getElementById("popup-title").textContent = "💀 GAME OVER";
-  document.getElementById("popup-text").textContent = `Score final : ${score} pts\nTu dois réviser davantage, Recrue !`;
-  document.getElementById("popup-btn").textContent = "RECOMMENCER";
-  document.getElementById("popup-btn").onclick = () => {
-    popup.style.display = "none";
-    init();
-  };
-  popup.style.display = "flex";
+function showLevelUp() {
+  showPopup("⬆️ LEVEL UP !", `Niveau ${level} atteint !\n+20 XP — Continue comme ça !`, "CONTINUER !", null);
 }
 
 function showEndScreen() {
-  const popup = document.getElementById("popup");
-  let rank = "";
-  const pct = Math.round((score / (questionsShuffled.length * 10)) * 100);
-  if (pct >= 90)       rank = "🏆 GRAND MAÎTRE JEDI";
-  else if (pct >= 75)  rank = "⚡ CHEVALIER CONFIRMÉ";
-  else if (pct >= 60)  rank = "🛡️ PADAWAN AVANCÉ";
-  else                 rank = "📚 RECRUE EN FORMATION";
+  const total = questionsShuffled.length;
+  const pct = Math.round((goodAnswers / total) * 100);
+  let rank, emoji;
+  if (pct === 100)     { rank = "GRAND MAÎTRE JEDI";    emoji = "🏆"; }
+  else if (pct >= 85)  { rank = "MAÎTRE JEDI";           emoji = "⚡"; }
+  else if (pct >= 70)  { rank = "CHEVALIER CONFIRMÉ";    emoji = "🛡️"; }
+  else if (pct >= 55)  { rank = "PADAWAN AVANCÉ";        emoji = "📋"; }
+  else                 { rank = "RECRUE EN FORMATION";   emoji = "📚"; }
 
-  document.getElementById("popup-title").textContent = "🎉 QUIZ TERMINÉ !";
-  document.getElementById("popup-text").textContent = `Score : ${score} pts (${pct}%)\nRang : ${rank}\nXP total : ${xp}`;
-  document.getElementById("popup-btn").textContent = "REJOUER";
-  document.getElementById("popup-btn").onclick = () => {
-    popup.style.display = "none";
-    init();
-  };
-  popup.style.display = "flex";
+  const msg = `${emoji} ${rank}\n\n✅ Bonnes réponses : ${goodAnswers} / ${total} (${pct}%)\n❌ Erreurs : ${badAnswers}\n💎 Score : ${score} pts\n⚡ XP total : ${xp}`;
+  showPopup("🎉 QUIZ TERMINÉ !", msg, "↺ REJOUER", () => init());
 }
 
 // ═══════════════════════════════════════════════
@@ -819,7 +791,6 @@ function showEndScreen() {
 // ═══════════════════════════════════════════════
 
 nextBtn.addEventListener("click", () => {
-  if (lives <= 0) return;
   currentQuestion++;
   loadQuestion();
 });
@@ -863,9 +834,4 @@ function drawStars() {
 }
 
 drawStars();
-
-// ═══════════════════════════════════════════════
-// LANCEMENT
-// ═══════════════════════════════════════════════
-
 init();
