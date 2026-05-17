@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Minecraft Academy - Révisions Gendarmerie</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="scanlines"></div>
+
+<div class="game-ui">
+
+  <header class="topbar">
+    <div class="title-block">
+      <h1>MINECRAFT ACADEMY</h1>
+      <p>RÉVISIONS RAPIDES / PIÈGES</p>
+    </div>
+
+    <div class="player-box">
+      <div>Niveau <span id="level">1</span></div>
+      <div>XP <span id="xp">0</span></div>
+    </div>
+  </header>
+
+  <section class="hud">
+
+    <div class="card">
+      <h3>❤️ VIES</h3>
+      <div id="lives">❤️❤️❤️</div>
+    </div>
+
+    <div class="card">
+      <h3>🔥 COMBO</h3>
+      <div id="combo">x0</div>
+    </div>
+
+    <div class="card">
+      <h3>💎 SCORE</h3>
+      <div id="score">0</div>
+    </div>
+
+  </section>
+
+  <section class="quiz-container">
+
+    <div class="difficulty" id="difficulty">
+      TERRE
+    </div>
+
+    <div class="question-box">
+      <div class="question-number" id="questionNumber"></div>
+
+      <h2 id="question"></h2>
+
+      <div class="answers" id="answers"></div>
+
+      <div id="feedback"></div>
+
+      <button id="nextBtn">QUESTION SUIVANTE</button>
+    </div>
+
+  </section>
+
+  <section class="progress-zone">
+    <div class="xp-bar">
+      <div class="xp-fill" id="xpFill"></div>
+    </div>
+  </section>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
